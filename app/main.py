@@ -134,6 +134,7 @@ async def update_kid_endpoint(kid_id: int, kid: KidCreate):
                            values={**kid.dict(), "id": kid_id})
     return {**kid.dict(), "id": kid_id}
 
+# Endpoint to contact a parent (Authentication required)
 @app.post("/contact_parent/{kid_id}")
 async def contact_parent(kid_id: int, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_active_user)):
     kid = await database.fetch_one(query="SELECT * FROM kids WHERE id = :id", values={"id": kid_id})
