@@ -27,9 +27,8 @@ parents = Table(
 parent_kid = Table(
     "parent_kid",
     metadata,
-    Column("parent_id", Integer, ForeignKey("parents.id")),  # Foreign key to the parents table
-    Column("kid_id", Integer, ForeignKey("kids.id")),        # Foreign key to the kids table
-    primary_key=True                                         # Composite primary key
+    Column("parent_id", Integer, ForeignKey("parents.id"), primary_key=True),  # Foreign key to the parents table
+    Column("kid_id", Integer, ForeignKey("kids.id"), primary_key=True)         # Foreign key to the kids table
 )
 
 # Define the users table for authentication
