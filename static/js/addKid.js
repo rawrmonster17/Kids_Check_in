@@ -1,38 +1,39 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const addKidForm = document.getElementById('addKidForm');
+document.getElementById("addKidForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    
+    const kidFirstName = document.getElementById("kidFirstName").value;
+    const kidLastName = document.getElementById("kidLastName").value;
+    const kidAllergies = document.getElementById("kidAllergies").value;
+    const parentFirstName = document.getElementById("parentFirstName").value;
+    const parentLastName = document.getElementById("parentLastName").value;
+    const parentPhoneNumber = document.getElementById("parentPhoneNumber").value;
+    const parentEmail = document.getElementById("parentEmail").value;
 
-    addKidForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(addKidForm);
-        const data = {
-            kid_first_name: formData.get('kidFirstName'),
-            kid_last_name: formData.get('kidLastName'),
-            kid_allergies: formData.get('kidAllergies'),
-            parent_first_name: formData.get('parentFirstName'),
-            parent_last_name: formData.get('parentLastName'),
-            parent_phone_number: formData.get('parentPhoneNumber'),
-            parent_email: formData.get('parentEmail')
-        };
+    const kidWithParent = {
+        kid_first_name: kidFirstName,
+        kid_last_name: kidLastName,
+        kid_allergies: kidAllergies,
+        parent_first_name: parentFirstName,
+        parent_last_name: parentLastName,
+        parent_phone_number: parentPhoneNumber,
+        parent_email: parentEmail
+    };
 
-        console.log(data); // Log the data to verify it's being collected correctly
-
-        try {
-            const response = await fetch('/add_kid_with_parent/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                console.log('Kid with parent added:', await response.json());
-                refreshKidsList();
-            } else {
-                console.error('Failed to add kid with parent:', await response.text());
-            }
-        } catch (error) {
-            console.error('Error adding kid:', error);
-        }
+    const response = await fetch("/add_kid_with_parent/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(kidWithParent)
     });
+
+    if (response.ok) {
+        alert("Kid and parent added successfully");
+        document.getElementById("addKidForm").reset();
+        refreshKidsList(); // Call this function to refresh the list of kids
+    } else {
+        const data = await response.json();
+        alert(`Error: ${data.detail}`);
+    }
 });
+
