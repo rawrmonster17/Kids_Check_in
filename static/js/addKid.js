@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
             kid_first_name: formData.get('kidFirstName'),
             kid_last_name: formData.get('kidLastName'),
             kid_allergies: formData.get('kidAllergies'),
-            kid_checked_in: formData.get('kidCheckedIn') === 'on',
             parent_first_name: formData.get('parentFirstName'),
             parent_last_name: formData.get('parentLastName'),
             parent_phone_number: formData.get('parentPhoneNumber'),

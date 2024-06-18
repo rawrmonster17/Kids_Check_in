@@ -77,7 +77,7 @@ async def add_kid_with_parent(request: Request):
     kid_with_parent = await request.json()
     logging.info(f"Received data: {kid_with_parent}")
     
-    required_fields = ["kid_first_name", "kid_last_name", "kid_allergies", "kid_checked_in",
+    required_fields = ["kid_first_name", "kid_last_name", "kid_allergies",
                        "parent_first_name", "parent_last_name", "parent_phone_number", "parent_email"]
     for field in required_fields:
         if field not in kid_with_parent or not kid_with_parent[field]:
@@ -101,7 +101,7 @@ async def add_kid_with_parent(request: Request):
         "first_name": kid_with_parent["kid_first_name"],
         "last_name": kid_with_parent["kid_last_name"],
         "allergies": kid_with_parent["kid_allergies"],
-        "checked_in": kid_with_parent["kid_checked_in"]
+        "checked_in": True  # Automatically set to checked in
     }
     kid_id = await create_kid(KidCreate(**kid_data))
     
