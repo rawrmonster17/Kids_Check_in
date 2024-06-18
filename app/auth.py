@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -8,6 +8,10 @@ from db import database
 from sqlalchemy import select
 from models import users
 from schemas import User, UserCreate, Token, TokenData
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Secret key and algorithm used to create and verify JWT tokens
 SECRET_KEY = "your_secret_key"
@@ -34,21 +38,28 @@ async def get_user(username: str):
     user = await database.fetch_one(query)
     if user:
         return User(**user)
+    logging.info(f"User {username} not found in the database")
+    return None
 
 # Authenticate the user by verifying the username and password
 async def authenticate_user(username: str, password: str):
     user = await get_user(username)
-    if not user or not verify_password(password, user.hashed_password):
+    if not user:
+        logging.info(f"Authentication failed: User {username} not found")
         return False
+    if not verify_password(password, user.hashed_password):
+        logging.info(f"Authentication failed: Incorrect password for user {username}")
+        return False
+    logging.info(f"User {username} authenticated successfully")
     return user
 
 # Create a JWT token
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
