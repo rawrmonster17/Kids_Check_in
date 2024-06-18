@@ -50,5 +50,19 @@
     <script src="/static/js/addKid.js"></script>
     <script src="/static/js/refreshKidsList.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <script>
+        // Example of adding a contact parent button to a kid item
+        function addKidToCheckedInList(kid) {
+            const listItem = document.createElement("li");
+            listItem.innerText = `${kid.first_name} ${kid.last_name}`;
+
+            const contactButton = document.createElement("button");
+            contactButton.innerText = "Contact Parent";
+            contactButton.addEventListener("click", () => contactParent(kid.id));
+
+            listItem.appendChild(contactButton);
+            document.getElementById("checkedInKidsList").appendChild(listItem);
+        }
+    </script>
 </body>
 </html>

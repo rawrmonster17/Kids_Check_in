@@ -53,6 +53,7 @@ class UserCreate(UserBase):
 # Model used for reading a User from the database, includes an id field
 class User(UserBase):
     id: int  # Includes ID for referencing specific User entries
+    hashed_password: str  # Hashed password for secure storage
 
     class Config:
         orm_mode = True  # Enable ORM mode to allow easy integration with databases
@@ -65,3 +66,7 @@ class Token(BaseModel):
 # Model used for token data, primarily for internal handling of authentication
 class TokenData(BaseModel):
     username: str | None = None  # Username field, optional as it can be None if token is invalid
+
+class SMSRequest(BaseModel):
+    to: str
+    message: str

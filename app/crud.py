@@ -1,9 +1,9 @@
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, insert
 from models import kids, parents, parent_kid
 from db import database
 
 async def create_kid(kid):
-    query = kids.insert().values(
+    query = insert(kids).values(
         first_name=kid.first_name,
         last_name=kid.last_name,
         allergies=kid.allergies,
@@ -12,7 +12,7 @@ async def create_kid(kid):
     return await database.execute(query)
 
 async def create_parent(parent):
-    query = parents.insert().values(
+    query = insert(parents).values(
         first_name=parent.first_name,
         last_name=parent.last_name,
         phone_number=parent.phone_number,
@@ -20,10 +20,10 @@ async def create_parent(parent):
     )
     return await database.execute(query)
 
-async def link_parent_kid(link):
-    query = parent_kid.insert().values(
-        parent_id=link.parent_id,
-        kid_id=link.kid_id
+async def link_parent_kid(parent_id, kid_id):
+    query = insert(parent_kid).values(
+        parent_id=parent_id,
+        kid_id=kid_id
     )
     return await database.execute(query)
 
