@@ -1,47 +1,40 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const loginButton = document.getElementById('loginButton');
-    const loginPopup = document.getElementById('loginPopup');
-    const closeSpan = document.getElementsByClassName('close')[0];
-    const loginForm = document.getElementById('loginForm');
-    const loginError = document.getElementById('loginError');
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-    loginButton.onclick = function() {
-        loginPopup.style.display = 'block';
-    };
-
-    closeSpan.onclick = function() {
-        loginPopup.style.display = 'none';
-    };
-
-    window.onclick = function(event) {
-        if (event.target === loginPopup) {
-            loginPopup.style.display = 'none';
-        }
-    };
-
-    loginForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(loginForm);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch('/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams(data)
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                localStorage.setItem('token', result.access_token);
-                loginPopup.style.display = 'none';
-            } else {
-                loginError.textContent = 'Invalid username or password';
-            }
-        } catch (error) {
-            console.error('Login failed:', error);
-        }
+    const response = await fetch("/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
     });
+
+    const data = await response.json();
+    if (response.ok) {
+        localStorage.setItem("token", data.access_token);
+        document.getElementById("loginPopup").style.display = "none";
+    } else {
+        document.getElementById("loginError").innerText = data.detail;
+    }
 });
+
+// Function to contact parent
+async function contactParent(kidId) {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`/contact_parent/${kidId}`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        alert("Parent contacted successfully.");
+    } else {
+        alert(`Error: ${data.detail}`);
+    }
+}

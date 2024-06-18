@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from schemas import KidCreate, Kid, ParentCreate, Parent, UserCreate, Token, User
+from schemas import KidCreate, Kid, ParentCreate, UserCreate, Token, User
 from crud import create_kid, create_parent, link_parent_kid, get_kids, get_parents
 from db import database, engine, metadata
 from models import users
@@ -74,7 +74,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def add_kid_with_parent(request: Request):
     kid_with_parent = await request.json()
     logging.info(f"Received data: {kid_with_parent}")
-    
+
     required_fields = ["kid_first_name", "kid_last_name", "kid_allergies",
                        "parent_first_name", "parent_last_name", "parent_phone_number", "parent_email"]
     for field in required_fields:
@@ -94,7 +94,7 @@ async def add_kid_with_parent(request: Request):
         "email": kid_with_parent["parent_email"]
     }
     parent_id = await create_parent(ParentCreate(**parent_data))
-    
+
     kid_data = {
         "first_name": kid_with_parent["kid_first_name"],
         "last_name": kid_with_parent["kid_last_name"],
@@ -102,9 +102,9 @@ async def add_kid_with_parent(request: Request):
         "checked_in": True  # Automatically set to checked in
     }
     kid_id = await create_kid(KidCreate(**kid_data))
-    
-    await link_parent_kid({"parent_id": parent_id, "kid_id": kid_id})
-    
+
+    await link_parent_kid(parent_id, kid_id)
+
     return {"kid_id": kid_id, "parent_id": parent_id}
 
 # Endpoint to create a new kid (No authentication required)
@@ -134,7 +134,6 @@ async def update_kid_endpoint(kid_id: int, kid: KidCreate):
                            values={**kid.dict(), "id": kid_id})
     return {**kid.dict(), "id": kid_id}
 
-# Endpoint to contact a parent, protected by authentication
 @app.post("/contact_parent/{kid_id}")
 async def contact_parent(kid_id: int, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_active_user)):
     kid = await database.fetch_one(query="SELECT * FROM kids WHERE id = :id", values={"id": kid_id})
