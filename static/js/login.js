@@ -15,8 +15,11 @@ document.getElementById("loginForm").addEventListener("submit", async function (
     if (response.ok) {
         localStorage.setItem("token", data.access_token);
         document.getElementById("loginPopup").style.display = "none";
+        document.getElementById("loginSuccess").innerText = "Login successful!";
+        document.getElementById("loginSuccess").style.color = "green";
     } else {
         document.getElementById("loginError").innerText = data.detail;
+        document.getElementById("loginError").style.color = "red";
     }
 });
 
