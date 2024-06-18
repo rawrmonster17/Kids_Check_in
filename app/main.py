@@ -7,10 +7,8 @@ from crud import create_kid, create_parent, link_parent_kid, get_kids, get_paren
 from db import database, engine, metadata
 from models import users
 from auth import authenticate_user, create_access_token, get_current_active_user, get_password_hash
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from datetime import timedelta
+from email_funtions import send_email
 import logging
 
 # Set up logging
@@ -135,22 +133,6 @@ async def update_kid_endpoint(kid_id: int, kid: KidCreate):
     await database.execute(query="UPDATE kids SET first_name = :first_name, last_name = :last_name, allergies = :allergies, checked_in = :checked_in WHERE id = :id",
                            values={**kid.dict(), "id": kid_id})
     return {**kid.dict(), "id": kid_id}
-
-# Function to send an email
-def send_email(to_email, subject, body):
-    from_email = "your_email@example.com"
-    from_password = "your_password"
-
-    message = MIMEMultipart()
-    message["From"] = from_email
-    message["To"] = to_email
-    message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
-
-    with smtplib.SMTP("smtp.example.com", 587) as server:
-        server.starttls()
-        server.login(from_email, from_password)
-        server.sendmail(from_email, to_email, message.as_string())
 
 # Endpoint to contact a parent, protected by authentication
 @app.post("/contact_parent/{kid_id}")
