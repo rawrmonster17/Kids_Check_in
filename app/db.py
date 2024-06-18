@@ -5,6 +5,7 @@ from databases import Database
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
+# Load environment variables from a .env file
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -31,9 +32,10 @@ def create_database_if_not_exists():
     cur.close()
     conn.close()
 
+# Ensure the database exists
 create_database_if_not_exists()
 
-# Now that we've ensured the database exists, proceed as before
+# Connect to the specified database
 database = Database(DATABASE_URL)
 metadata = MetaData()
 engine = create_engine(DATABASE_URL)

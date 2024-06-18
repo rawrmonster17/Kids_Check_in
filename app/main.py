@@ -1,16 +1,20 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from schemas import KidCreate, Kid, ParentCreate, Parent, UserCreate, Token, User
-from crud import create_kid, create_parent, link_parent_kid, get_kids, get_parents  # Removed the non-existent import
+from crud import create_kid, create_parent, link_parent_kid, get_kids, get_parents
 from db import database, engine, metadata
-from models import users  # Import the users table
+from models import users
 from auth import authenticate_user, create_access_token, get_current_active_user, get_password_hash
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import timedelta
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Set the token expiration time (in minutes)
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -67,9 +71,18 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# Endpoint to add a new kid with parent details
+# Endpoint to add a new kid with parent details (No authentication required)
 @app.post("/add_kid_with_parent/")
-async def add_kid_with_parent(kid_with_parent: dict):
+async def add_kid_with_parent(request: Request):
+    kid_with_parent = await request.json()
+    logging.info(f"Received data: {kid_with_parent}")
+    
+    required_fields = ["kid_first_name", "kid_last_name", "kid_allergies", "kid_checked_in",
+                       "parent_first_name", "parent_last_name", "parent_phone_number", "parent_email"]
+    for field in required_fields:
+        if field not in kid_with_parent or not kid_with_parent[field]:
+            raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+
     # Check for duplicate kid entry
     duplicate_kid = await database.fetch_one(query="SELECT * FROM kids WHERE first_name = :first_name AND last_name = :last_name",
                                              values={"first_name": kid_with_parent["kid_first_name"], "last_name": kid_with_parent["kid_last_name"]})
@@ -96,7 +109,7 @@ async def add_kid_with_parent(kid_with_parent: dict):
     
     return {"kid_id": kid_id, "parent_id": parent_id}
 
-# Endpoint to create a new kid
+# Endpoint to create a new kid (No authentication required)
 @app.post("/kids/", response_model=Kid)
 async def create_kid_endpoint(kid: KidCreate):
     # Check for duplicate kid entry
@@ -108,12 +121,12 @@ async def create_kid_endpoint(kid: KidCreate):
     last_record_id = await create_kid(kid)
     return {**kid.dict(), "id": last_record_id}
 
-# Endpoint to get a list of kids with pagination
+# Endpoint to get a list of kids with pagination (No authentication required)
 @app.get("/kids/", response_model=list[Kid])
 async def read_kids(skip: int = 0, limit: int = 10):
     return await get_kids(skip, limit)
 
-# Endpoint to update a kid's checked-in status
+# Endpoint to update a kid's checked-in status (No authentication required)
 @app.put("/kids/{kid_id}", response_model=Kid)
 async def update_kid_endpoint(kid_id: int, kid: KidCreate):
     existing_kid = await database.fetch_one(query="SELECT * FROM kids WHERE id = :id", values={"id": kid_id})
@@ -122,43 +135,6 @@ async def update_kid_endpoint(kid_id: int, kid: KidCreate):
     await database.execute(query="UPDATE kids SET first_name = :first_name, last_name = :last_name, allergies = :allergies, checked_in = :checked_in WHERE id = :id",
                            values={**kid.dict(), "id": kid_id})
     return {**kid.dict(), "id": kid_id}
-
-@app.post("/add_kid_with_parent/")
-async def add_kid_with_parent(kid_with_parent: dict):
-    # Extract kid and parent information from the incoming dictionary
-    try:
-        kid_data = KidCreate(
-            first_name=kid_with_parent["kid_first_name"],
-            last_name=kid_with_parent["kid_last_name"],
-            allergies=kid_with_parent["kid_allergies"],
-            checked_in=kid_with_parent["kid_checked_in"]
-        )
-
-        parent_data = ParentCreate(
-            first_name=kid_with_parent["parent_first_name"],
-            last_name=kid_with_parent["parent_last_name"],
-            phone_number=kid_with_parent["parent_phone_number"],
-            email=kid_with_parent["parent_email"]
-        )
-    except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"Missing field: {e}")
-
-    # Check for duplicate kid entry
-    duplicate_kid = await database.fetch_one(query="SELECT * FROM kids WHERE first_name = :first_name AND last_name = :last_name",
-                                             values={"first_name": kid_data.first_name, "last_name": kid_data.last_name})
-    if (duplicate_kid):
-        raise HTTPException(status_code=400, detail="Kid with the same first and last name already exists")
-
-    # Create parent and kid in the database
-    parent_id = await create_parent(parent_data)
-    kid_id = await create_kid(kid_data)
-
-    # Link parent and kid
-    await link_parent_kid({"parent_id": parent_id, "kid_id": kid_id})
-
-    return {"kid_id": kid_id, "parent_id": parent_id, "message": "Kid and parent added successfully"}
-
-
 
 # Function to send an email
 def send_email(to_email, subject, body):

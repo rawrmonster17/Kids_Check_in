@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
             parent_email: formData.get('parentEmail')
         };
 
+        console.log(data); // Log the data to verify it's being collected correctly
+
         try {
             const response = await fetch('/add_kid_with_parent/', {
                 method: 'POST',
