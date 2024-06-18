@@ -69,7 +69,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# Endpoint to add a new kid with parent details (No authentication required)
 @app.post("/add_kid_with_parent/")
 async def add_kid_with_parent(request: Request):
     kid_with_parent = await request.json()
@@ -106,6 +105,7 @@ async def add_kid_with_parent(request: Request):
     await link_parent_kid(parent_id, kid_id)
 
     return {"kid_id": kid_id, "parent_id": parent_id}
+
 
 # Endpoint to create a new kid (No authentication required)
 @app.post("/kids/", response_model=Kid)
