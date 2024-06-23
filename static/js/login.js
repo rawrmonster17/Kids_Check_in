@@ -1,43 +1,34 @@
-document.getElementById("loginForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+// login.js
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    const response = await fetch("/token", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-    });
+    try {
+        const response = await fetch("/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                username: username,
+                password: password
+            })
+        });
 
-    const data = await response.json();
-    if (response.ok) {
+        if (!response.ok) {
+            throw new Error("Network response was not ok " + response.statusText);
+        }
+
+        const data = await response.json();
         localStorage.setItem("token", data.access_token);
-        document.getElementById("loginPopup").style.display = "none";
         document.getElementById("loginSuccess").innerText = "Login successful!";
-        document.getElementById("loginSuccess").style.color = "green";
-    } else {
-        document.getElementById("loginError").innerText = data.detail;
-        document.getElementById("loginError").style.color = "red";
+        document.getElementById("loginPopup").style.display = "none";
+
+        // Optionally refresh the list of kids or any other action on successful login
+        // refreshKidsList();
+    } catch (error) {
+        document.getElementById("loginError").innerText = "Login failed: " + error.message;
     }
 });
-
-// Function to contact parent
-async function contactParent(kidId) {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`/contact_parent/${kidId}`, {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-        alert("Parent contacted successfully.");
-    } else {
-        alert(`Error: ${data.detail}`);
-    }
-}

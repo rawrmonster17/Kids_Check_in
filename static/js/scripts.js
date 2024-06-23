@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeSpan = document.getElementsByClassName('close')[0];
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
-    const addKidForm = document.getElementById('addKidForm');
+    const addFamilyForm = document.getElementById('addFamilyForm');
     const checkedInKidsList = document.getElementById('checkedInKidsList');
     const checkedOutKidsList = document.getElementById('checkedOutKidsList');
 
@@ -48,22 +48,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    addKidForm.addEventListener('submit', async function(event) {
+    addFamilyForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        const formData = new FormData(addKidForm);
-        const data = {
-            kid_first_name: formData.get('kidFirstName'),
-            kid_last_name: formData.get('kidLastName'),
-            kid_allergies: formData.get('kidAllergies'),
-            kid_checked_in: formData.get('kidCheckedIn') === 'on',
-            parent_first_name: formData.get('parentFirstName'),
-            parent_last_name: formData.get('parentLastName'),
-            parent_phone_number: formData.get('parentPhoneNumber'),
-            parent_email: formData.get('parentEmail')
-        };
+        const formData = new FormData(addFamilyForm);
+        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch('/add_kid_with_parent/', {
+            const response = await fetch('/family/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -72,81 +63,80 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.ok) {
-                console.log('Kid with parent added:', await response.json());
+                alert('Family added successfully!');
                 refreshKidsList();
             } else {
-                console.error('Failed to add kid with parent:', await response.text());
+                alert('Failed to add family.');
             }
         } catch (error) {
-            console.error('Error adding kid:', error);
+            console.error('Error adding family:', error);
         }
     });
 
     async function refreshKidsList() {
         try {
-            const response = await fetch('/kids/');
-            const kids = await response.json();
-            console.log('Received kids:', kids);
+            const response = await fetch("/families/");
+            const families = await response.json();
 
-            checkedInKidsList.innerHTML = '';
-            checkedOutKidsList.innerHTML = '';
+            checkedInKidsList.innerHTML = "";
+            checkedOutKidsList.innerHTML = "";
 
-            kids.forEach(kid => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${kid.first_name} ${kid.last_name} - Allergies: ${kid.allergies}`;
+            families.forEach(family => {
+                const listItem = document.createElement("li");
+                listItem.innerText = `${family.kid_first_name} ${family.kid_last_name}`;
 
-                const button = document.createElement('button');
-                button.textContent = kid.checked_in ? 'Check Out' : 'Check In';
-                button.addEventListener('click', async function() {
-                    kid.checked_in = !kid.checked_in;
-                    const response = await fetch(`/kids/${kid.id}`, {
-                        method: 'PUT',
+                const contactButton = document.createElement("button");
+                contactButton.innerText = "Contact Parent";
+                contactButton.addEventListener("click", async function() {
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                        alert("You must be logged in to contact parents.");
+                        return;
+                    }
+                    const response = await fetch(`/contact_parent/${family.id}`, {
+                        method: "POST",
                         headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(kid)
+                            "Authorization": `Bearer ${token}`
+                        }
                     });
 
                     if (response.ok) {
-                        console.log('Kid status updated:', await response.json());
-                        refreshKidsList();
+                        alert("Parent contacted successfully!");
                     } else {
-                        console.error('Failed to update kid status:', await response.text());
+                        alert("Failed to contact parent. Please ensure you are logged in.");
                     }
                 });
 
-                listItem.appendChild(button);
-
-                if (kid.checked_in) {
-                    const contactButton = document.createElement('button');
-                    contactButton.textContent = 'Contact Parent';
-                    contactButton.addEventListener('click', async function() {
-                        const token = localStorage.getItem('token');
-                        if (!token) {
-                            alert('You must be logged in to contact parents.');
-                            return;
-                        }
-                        const response = await fetch(`/contact_parent/${kid.id}`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-
-                        if (response.ok) {
-                            console.log('Parent contacted:', await response.json());
-                        } else {
-                            alert('Failed to contact parent. Please ensure you are logged in.');
-                        }
+                const checkInOutButton = document.createElement("button");
+                checkInOutButton.innerText = family.kid_checked_in ? "Check Out" : "Check In";
+                checkInOutButton.addEventListener("click", async function() {
+                    const newStatus = !family.kid_checked_in;
+                    const response = await fetch(`/families/${family.id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ kid_checked_in: newStatus })
                     });
-                    listItem.appendChild(contactButton);
+
+                    if (response.ok) {
+                        refreshKidsList();
+                    } else {
+                        alert("Failed to update check-in status.");
+                    }
+                });
+
+                listItem.appendChild(contactButton);
+                listItem.appendChild(checkInOutButton);
+
+                if (family.kid_checked_in) {
                     checkedInKidsList.appendChild(listItem);
                 } else {
                     checkedOutKidsList.appendChild(listItem);
                 }
             });
         } catch (error) {
-            console.error('Error refreshing kids list:', error);
+            console.error("Error refreshing kids list:", error);
         }
     }
 

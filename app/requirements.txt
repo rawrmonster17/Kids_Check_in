@@ -10,3 +10,4 @@ python-jose==3.3.0
 passlib==1.7.4
 python-multipart==0.0.9
 twilio==9.2.0
+pydantic[email]==1.10.5
