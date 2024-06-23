@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeSpan = document.getElementsByClassName('close')[0];
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
-    const addFamilyForm = document.getElementById('addFamilyForm');
     const checkedInKidsList = document.getElementById('checkedInKidsList');
     const checkedOutKidsList = document.getElementById('checkedOutKidsList');
 
@@ -45,31 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Login failed:', error);
-        }
-    });
-
-    addFamilyForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(addFamilyForm);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch('/family/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                alert('Family added successfully!');
-                refreshKidsList();
-            } else {
-                alert('Failed to add family.');
-            }
-        } catch (error) {
-            console.error('Error adding family:', error);
         }
     });
 

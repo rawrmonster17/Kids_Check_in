@@ -1,46 +1,42 @@
-// addFamily.js
-document.getElementById("addFamilyForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
+document.addEventListener("DOMContentLoaded", function() {
+    // Event listener for form submission
+    document.getElementById('addFamilyForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent default form submission
 
-    const kidFirstName = document.getElementById("kidFirstName").value;
-    const kidLastName = document.getElementById("kidLastName").value;
-    const kidAllergies = document.getElementById("kidAllergies").value;
-    const parentFirstName = document.getElementById("parentFirstName").value;
-    const parentLastName = document.getElementById("parentLastName").value;
-    const parentPhoneNumber = document.getElementById("parentPhoneNumber").value;
-    const parentEmail = document.getElementById("parentEmail").value;
-    const kidCheckedIn = true; // Default to true on creation
+        // Collect form data
+        const formData = new FormData(event.target);
+        const data = {
+            kid_first_name: formData.get('kid_first_name'),
+            kid_last_name: formData.get('kid_last_name'),
+            kid_allergies: formData.get('kid_allergies'),
+            parent_first_name: formData.get('parent_first_name'),
+            parent_last_name: formData.get('parent_last_name'),
+            parent_phone_number: formData.get('parent_phone_number'),
+            parent_email: formData.get('parent_email'),
+            kid_checked_in: formData.get('kid_checked_in') === 'true' // Convert checkbox value to boolean
+        };
 
-    const familyData = {
-        parent_first_name: parentFirstName,
-        parent_last_name: parentLastName,
-        parent_phone_number: parentPhoneNumber,
-        parent_email: parentEmail,
-        kid_first_name: kidFirstName,
-        kid_last_name: kidLastName,
-        kid_allergies: kidAllergies,
-        kid_checked_in: kidCheckedIn
-    };
+        try {
+            // Send form data to the server
+            const response = await fetch('/family/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
 
-    try {
-        const response = await fetch("/family/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(familyData)
-        });
-
-        if (!response.ok) {
-            throw new Error("Network response was not ok " + response.statusText);
+            if (response.ok) {
+                alert('Family added successfully!');
+                // Optionally reset the form
+                event.target.reset();
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${JSON.stringify(errorData)}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while adding the family. Please try again later.');
         }
-
-        const result = await response.json();
-        alert("Family added successfully!");
-
-        // Optionally refresh the list of kids
-        refreshKidsList();
-    } catch (error) {
-        console.error("There was a problem with the fetch operation:", error);
-    }
+    });
 });
